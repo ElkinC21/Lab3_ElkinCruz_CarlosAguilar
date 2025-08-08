@@ -9,7 +9,7 @@ public class SudokuGui extends JFrame {
     private TableroSudoku tablero;
 
     public SudokuGui() {
-        setTitle("Sudoku Macizo");
+        setTitle("Sudoku - Jugar Aleatorio");
         setSize(500, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -21,6 +21,14 @@ public class SudokuGui extends JFrame {
             for (int col = 0; col < 9; col++) {
                 JTextField campo = new JTextField();
                 campo.setHorizontalAlignment(JTextField.CENTER);
+
+                // Aplicar bordes gruesos para marcar regiones 3x3
+                int top = (fila % 3 == 0) ? 2 : 1;
+                int left = (col % 3 == 0) ? 2 : 1;
+                int bottom = (fila == 8) ? 2 : 1;
+                int right = (col == 8) ? 2 : 1;
+                campo.setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, Color.BLACK));
+
                 int valor = tablero.getValor(fila, col);
 
                 if (valor != 0) {
