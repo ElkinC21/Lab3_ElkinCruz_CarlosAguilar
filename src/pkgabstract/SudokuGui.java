@@ -8,6 +8,10 @@ public class SudokuGui extends JFrame {
     private JTextField[][] campos = new JTextField[9][9];
     private TableroSudoku tablero;
 
+    // === Control de fallos (nuevo) ===
+    private int fallos = 0;
+    private static final int MAX_FALLOS = 3;
+
     public SudokuGui() {
         setTitle("Sudoku - Jugar Aleatorio");
         setSize(500, 600);
@@ -22,7 +26,7 @@ public class SudokuGui extends JFrame {
                 JTextField campo = new JTextField();
                 campo.setHorizontalAlignment(JTextField.CENTER);
 
-                // Aplicar bordes gruesos para marcar regiones 3x3
+                // Bordes para marcar regiones 3x3
                 int top = (fila % 3 == 0) ? 2 : 1;
                 int left = (col % 3 == 0) ? 2 : 1;
                 int bottom = (fila == 8) ? 2 : 1;
@@ -30,34 +34,53 @@ public class SudokuGui extends JFrame {
                 campo.setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, Color.BLACK));
 
                 int valor = tablero.getValor(fila, col);
-
                 if (valor != 0) {
                     campo.setText(String.valueOf(valor));
-                    campo.setEditable(false);
+                    campo.setEditable(false);           // celdas fijas iniciales
                     campo.setBackground(Color.LIGHT_GRAY);
                 }
 
                 final int f = fila, c = col;
                 campo.addKeyListener(new KeyAdapter() {
+                    @Override
                     public void keyReleased(KeyEvent e) {
-                        String texto = campo.getText();
-                        if (!texto.matches("[1-9]?")) {
-                            campo.setText("");
+                        // Si la celda está bloqueada (inicial o confirmada por el usuario), no permitir cambios
+                        if (!campo.isEditable()) {
+                            e.consume();
                             return;
                         }
 
+                        String texto = campo.getText().trim();
+
+                        // Solo un dígito 1..9 (o vacío mientras escribe)
+                        if (!texto.matches("[1-9]?")) {
+                            campo.setText("");
+                            campo.setForeground(Color.BLACK);
+                            return;
+                        }
+
+                        // Si quedó vacío, reflejar en el modelo y salir
                         if (texto.isEmpty()) {
                             tablero.setValor(f, c, 0);
+                            campo.setForeground(Color.BLACK);
                             return;
                         }
 
                         int num = Integer.parseInt(texto);
+
+                        // Validar contra reglas actuales del tablero
                         if (tablero.esMovimientoValido(f, c, num)) {
+                            // Jugada válida: guardar y BLOQUEAR para que no pueda borrar/cambiar
                             tablero.setValor(f, c, num);
                             campo.setForeground(Color.BLACK);
+                            campo.setEditable(false);      // << no permite borrar lo que escribió
+                            campo.setBackground(Color.WHITE);
                         } else {
-                            campo.setForeground(Color.RED);
-                        }
+                        
+                        campo.setForeground(Color.RED);
+                        
+                        registrarFallo();             
+                    }
                     }
                 });
 
@@ -68,6 +91,7 @@ public class SudokuGui extends JFrame {
 
         JButton limpiarBtn = new JButton("Limpiar");
         limpiarBtn.addActionListener(e -> {
+            // Limpia solo lo que es editable (lo fijo y lo confirmado por usuario no se borra)
             for (int i = 0; i < 9; i++) {
                 for (int j = 0; j < 9; j++) {
                     if (campos[i][j].isEditable()) {
@@ -77,13 +101,62 @@ public class SudokuGui extends JFrame {
                     }
                 }
             }
+            // Si deseas que "Limpiar" también reinicie fallos:
+            // fallos = 0; actualizarTitulo();
         });
 
         add(tableroPanel, BorderLayout.CENTER);
         add(limpiarBtn, BorderLayout.SOUTH);
+
+        actualizarTitulo(); // mostrar contador en el título
     }
 
+    // === Manejo de fallos y reinicio (nuevo) ===
+
+    private void registrarFallo() {
+        fallos++;
+        actualizarTitulo();
+        if (fallos >= MAX_FALLOS) {
+            JOptionPane.showMessageDialog(this,
+                    "Has alcanzado " + MAX_FALLOS + " intentos fallidos.\nLa partida se reiniciará.",
+                    "Fin de partida", JOptionPane.WARNING_MESSAGE);
+            reiniciarPartida();
+        }
+    }
+
+    private void actualizarTitulo() {
+        setTitle("Sudoku - Jugar Aleatorio  |  Fallos: " + fallos + "/" + MAX_FALLOS);
+    }
+
+    private void reiniciarPartida() {
+        fallos = 0;
+        actualizarTitulo();
+
+        tablero = new TableroSudoku();
+
+        
+        for (int fila = 0; fila < 9; fila++) {
+            for (int col = 0; col < 9; col++) {
+                int v = tablero.getValor(fila, col);
+                JTextField campo = campos[fila][col];
+                if (v != 0) {
+                    campo.setText(String.valueOf(v));
+                    campo.setEditable(false);
+                    campo.setForeground(Color.BLACK);
+                    campo.setBackground(Color.LIGHT_GRAY);
+                } else {
+                    campo.setText("");
+                    campo.setEditable(true);
+                    campo.setForeground(Color.BLACK);
+                    campo.setBackground(Color.WHITE);
+                }
+            }
+        }
+    }
+
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SudokuGui().setVisible(true));
     }
 }
+
