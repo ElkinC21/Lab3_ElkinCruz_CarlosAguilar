@@ -7,13 +7,10 @@ import java.awt.event.*;
 public class SudokuGui extends JFrame {
     private JTextField[][] campos = new JTextField[9][9];
     private TableroSudoku tablero;
-
-    
     private int fallos = 0;
     private static final int MAX_FALLOS = 3;
-
-    
     private JLabel lblErrores;
+    private TableroSudoku.Dificultad dificultadSeleccionada;
 
     public SudokuGui() {
         setTitle("Sudoku - Jugar Aleatorio");
@@ -21,15 +18,18 @@ public class SudokuGui extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        tablero = new TableroSudoku();
+        dificultadSeleccionada = pedirDificultad();
+        if (dificultadSeleccionada == null) {
+            dificultadSeleccionada = TableroSudoku.Dificultad.MEDIO;
+        }
 
-        
+        tablero = new TableroSudoku(dificultadSeleccionada);
+
         lblErrores = new JLabel("", SwingConstants.CENTER);
-        lblErrores.setFont(new Font("SansSerif", Font.PLAIN, 24));
+        lblErrores.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lblErrores.setForeground(Color.DARK_GRAY);
         add(lblErrores, BorderLayout.NORTH);
 
-        
         JPanel tableroPanel = new JPanel(new GridLayout(9, 9));
 
         for (int fila = 0; fila < 9; fila++) {
@@ -37,7 +37,6 @@ public class SudokuGui extends JFrame {
                 JTextField campo = new JTextField();
                 campo.setHorizontalAlignment(JTextField.CENTER);
 
-                
                 int top = (fila % 3 == 0) ? 2 : 1;
                 int left = (col % 3 == 0) ? 2 : 1;
                 int bottom = (fila == 8) ? 2 : 1;
@@ -59,23 +58,18 @@ public class SudokuGui extends JFrame {
                             e.consume();
                             return;
                         }
-
                         String texto = campo.getText().trim();
-
                         if (!texto.matches("[1-9]?")) {
                             campo.setText("");
                             campo.setForeground(Color.BLACK);
                             return;
                         }
-
                         if (texto.isEmpty()) {
                             tablero.setValor(f, c, 0);
                             campo.setForeground(Color.BLACK);
                             return;
                         }
-
                         int num = Integer.parseInt(texto);
-
                         if (tablero.esMovimientoValido(f, c, num)) {
                             tablero.setValor(f, c, num);
                             campo.setForeground(Color.BLACK);
@@ -93,31 +87,37 @@ public class SudokuGui extends JFrame {
             }
         }
 
-        
-        JButton limpiarBtn = new JButton("Limpiar");
-        limpiarBtn.addActionListener(e -> {
-            for (int i = 0; i < 9; i++) {
-                for (int j = 0; j < 9; j++) {
-                    if (campos[i][j].isEditable()) {
-                        campos[i][j].setText("");
-                        campos[i][j].setForeground(Color.BLACK);
-                        tablero.setValor(i, j, 0);
-                    }
-                }
-            }
-        });
+        JButton reiniciarBtn = new JButton("Reiniciar");
+        reiniciarBtn.setToolTipText("Reinicia la partida con un nuevo tablero");
+        reiniciarBtn.addActionListener(e -> reiniciarPartida());
 
-       
         add(tableroPanel, BorderLayout.CENTER);
-        add(limpiarBtn, BorderLayout.SOUTH);
+        add(reiniciarBtn, BorderLayout.SOUTH);
 
-        actualizarTitulo();
+        actualizarIndicadores();
     }
 
-    
+    private TableroSudoku.Dificultad pedirDificultad() {
+        String[] opciones = {"Fácil", "Medio", "Difícil"};
+        int sel = JOptionPane.showOptionDialog(
+                this,
+                "Elige la dificultad:",
+                "Dificultad",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[1]
+        );
+        if (sel == 0) return TableroSudoku.Dificultad.FACIL;
+        if (sel == 1) return TableroSudoku.Dificultad.MEDIO;
+        if (sel == 2) return TableroSudoku.Dificultad.DIFICIL;
+        return null;
+    }
+
     private void registrarFallo() {
         fallos++;
-        actualizarTitulo();
+        actualizarIndicadores();
         if (fallos >= MAX_FALLOS) {
             JOptionPane.showMessageDialog(this,
                     "Has alcanzado " + MAX_FALLOS + " intentos fallidos.\nLa partida se reiniciará.",
@@ -126,19 +126,26 @@ public class SudokuGui extends JFrame {
         }
     }
 
-    private void actualizarTitulo() {
-        setTitle("Sudoku - Jugar Aleatorio");
+    private void actualizarIndicadores() {
+        setTitle("Sudoku - " + dificultadSeleccionada + "  |  Fallos: " + fallos + "/" + MAX_FALLOS);
         if (lblErrores != null) {
-            lblErrores.setText("Errores: " + fallos + " / " + MAX_FALLOS);
+            lblErrores.setText("Dificultad: " + textoDificultad(dificultadSeleccionada)
+                    + "   |   Errores: " + fallos + " / " + MAX_FALLOS);
+        }
+    }
+
+    private String textoDificultad(TableroSudoku.Dificultad d) {
+        switch (d) {
+            case FACIL: return "Fácil";
+            case MEDIO: return "Medio";
+            case DIFICIL: return "Difícil";
+            default: return d.toString();
         }
     }
 
     private void reiniciarPartida() {
         fallos = 0;
-        actualizarTitulo();
-
-        tablero = new TableroSudoku();
-
+        tablero = new TableroSudoku(dificultadSeleccionada);
         for (int fila = 0; fila < 9; fila++) {
             for (int col = 0; col < 9; col++) {
                 int v = tablero.getValor(fila, col);
@@ -156,9 +163,9 @@ public class SudokuGui extends JFrame {
                 }
             }
         }
+        actualizarIndicadores();
     }
 
-    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SudokuGui().setVisible(true));
     }

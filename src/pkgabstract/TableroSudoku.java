@@ -7,9 +7,20 @@ import java.util.Random;
 
 public class TableroSudoku extends SudokuBase {
 
+    public enum Dificultad { FACIL, MEDIO, DIFICIL }
+
+    private Dificultad dificultad = Dificultad.MEDIO;
+
     public TableroSudoku() {
         super();
-        generarTableroAleatorio();
+        generarTableroAleatorio(dificultad); 
+    }
+
+    
+    public TableroSudoku(Dificultad dificultad) {
+        super();
+        this.dificultad = dificultad;
+        generarTableroAleatorio(dificultad);
     }
 
     @Override
@@ -28,7 +39,6 @@ public class TableroSudoku extends SudokuBase {
                 if ((f != fila || c != col) && tablero[f][c].getValor() == numero) return false;
             }
         }
-
         return true;
     }
 
@@ -52,16 +62,32 @@ public class TableroSudoku extends SudokuBase {
                 tablero[fila][col].setValor(0);
             }
         }
-
         return false;
     }
 
-    private void generarTableroAleatorio() {
-        resolverSudoku(0, 0); // Genera solución completa válida
+    
+    private void generarTableroAleatorio(Dificultad dif) {
+        
+        resolverSudoku(0, 0);
 
-        // Elimina aleatoriamente entre 40 y 50 valores
+       
         Random rand = new Random();
-        int celdasPorBorrar = 40 + rand.nextInt(11);
+        int celdasPorBorrar;
+
+        switch (dif) {
+            case FACIL:
+                
+                celdasPorBorrar = 30 + rand.nextInt(6); 
+                break;
+            case DIFICIL:
+                
+                celdasPorBorrar = 50 + rand.nextInt(6); 
+                break;
+            case MEDIO:
+            default:
+                celdasPorBorrar = 40 + rand.nextInt(6); 
+                break;
+        }
 
         while (celdasPorBorrar > 0) {
             int fila = rand.nextInt(9);
