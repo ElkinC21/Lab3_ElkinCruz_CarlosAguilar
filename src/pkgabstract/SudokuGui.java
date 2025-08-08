@@ -14,7 +14,7 @@ public class SudokuGui extends JFrame {
 
     public SudokuGui() {
         setTitle("Sudoku");
-        setSize(500, 600);
+        setSize(500, 620);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -26,7 +26,7 @@ public class SudokuGui extends JFrame {
         tablero = new TableroSudoku(dificultad);
 
         lblErrores = new JLabel("", SwingConstants.CENTER);
-        lblErrores.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblErrores.setFont(new Font("Arial", Font.PLAIN, 14));
         lblErrores.setForeground(Color.DARK_GRAY);
         add(lblErrores, BorderLayout.NORTH);
 
@@ -59,24 +59,41 @@ public class SudokuGui extends JFrame {
                             return;
                         }
                         String texto = campo.getText().trim();
+
+                        
                         if (!texto.matches("[1-9]?")) {
                             campo.setText("");
                             campo.setForeground(Color.BLACK);
                             return;
                         }
+
                         if (texto.isEmpty()) {
                             tablero.setValor(f, c, 0);
                             campo.setForeground(Color.BLACK);
+                            campo.setBackground(Color.WHITE);
                             return;
                         }
+
                         int num = Integer.parseInt(texto);
-                        if (tablero.esMovimientoValido(f, c, num)) {
+
+                       
+                        if (!tablero.esMovimientoValido(f, c, num)) {
+                            campo.setForeground(Color.RED);
+                            campo.setBackground(new Color(255, 235, 235));
+                            registrarFallo();
+                            return;
+                        }
+
+                      
+                        int correcto = tablero.getSolucionValor(f, c);
+                        if (num == correcto) {
                             tablero.setValor(f, c, num);
                             campo.setForeground(Color.BLACK);
-                            campo.setEditable(false);
                             campo.setBackground(Color.WHITE);
+                            campo.setEditable(false); 
                         } else {
                             campo.setForeground(Color.RED);
+                            campo.setBackground(new Color(255, 235, 235));
                             registrarFallo();
                         }
                     }
@@ -87,18 +104,48 @@ public class SudokuGui extends JFrame {
             }
         }
 
+        
+        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton resolverBtn = new JButton("Resolver");
+        resolverBtn.setToolTipText("Resuelve el tablero actual");
+        resolverBtn.addActionListener(e -> {
+            boolean[][] eraEditable = new boolean[9][9];
+            for (int f = 0; f < 9; f++)
+                for (int c = 0; c < 9; c++)
+                    eraEditable[f][c] = campos[f][c].isEditable();
+
+            if (tablero.resolver()) {
+                for (int f = 0; f < 9; f++) {
+                    for (int c = 0; c < 9; c++) {
+                        int v = tablero.getValor(f, c);
+                        JTextField campo = campos[f][c];
+                        campo.setText(v == 0 ? "" : String.valueOf(v));
+                        campo.setEditable(false);
+                        campo.setBackground(eraEditable[f][c] ? Color.WHITE : Color.LIGHT_GRAY);
+                        campo.setForeground(Color.BLACK);
+                    }
+                }
+                JOptionPane.showMessageDialog(this, "Tablero resuelto.");
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo resolver (estado invalido).", "Atencion", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
         JButton reiniciarBtn = new JButton("Reiniciar");
         reiniciarBtn.setToolTipText("Reinicia la partida con un nuevo tablero");
         reiniciarBtn.addActionListener(e -> reiniciarPartida());
 
+        acciones.add(resolverBtn);
+        acciones.add(reiniciarBtn);
+
         add(tableroPanel, BorderLayout.CENTER);
-        add(reiniciarBtn, BorderLayout.SOUTH);
+        add(acciones, BorderLayout.SOUTH);
 
         actualizarIndicadores();
     }
 
     private TableroSudoku.Dificultad pedirDificultad() {
-        String[] opciones = {"Fácil", "Medio", "Difícil"};
+        String[] opciones = {"Facil", "Medio", "Dificil"};
         int sel = JOptionPane.showOptionDialog(
                 this,
                 "Elige la dificultad:",
@@ -120,25 +167,25 @@ public class SudokuGui extends JFrame {
         actualizarIndicadores();
         if (fallos >= MAX_FALLOS) {
             JOptionPane.showMessageDialog(this,
-                    "Has alcanzado " + MAX_FALLOS + " intentos fallidos.\nLa partida se reiniciará.",
+                    "Has alcanzado " + MAX_FALLOS + " intentos fallidos \nLa partida se reiniciara",
                     "Fin de partida", JOptionPane.WARNING_MESSAGE);
             reiniciarPartida();
         }
     }
 
     private void actualizarIndicadores() {
-        setTitle("Sudoku - " + dificultad + "  |  Fallos: " + fallos + "/" + MAX_FALLOS);
+        setTitle("Sudoku");
         if (lblErrores != null) {
             lblErrores.setText("Dificultad: " + textoDificultad(dificultad)
-                    + "   |   Errores: " + fallos + " / " + MAX_FALLOS);
+                    + "      Errores: " + fallos + " / " + MAX_FALLOS);
         }
     }
 
     private String textoDificultad(TableroSudoku.Dificultad d) {
         switch (d) {
-            case FACIL: return "Fácil";
+            case FACIL: return "Facil";
             case MEDIO: return "Medio";
-            case DIFICIL: return "Difícil";
+            case DIFICIL: return "Dificil";
             default: return d.toString();
         }
     }
@@ -168,5 +215,7 @@ public class SudokuGui extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SudokuGui().setVisible(true));
+        
     }
 }
+
