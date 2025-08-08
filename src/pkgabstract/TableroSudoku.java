@@ -66,7 +66,7 @@ public class TableroSudoku extends SudokuBase {
     }
 
     
-    private void generarTableroAleatorio(Dificultad dif) {
+    private void generarTableroAleatorio(Dificultad dificultad) {
         
         resolverSudoku(0, 0);
 
@@ -74,7 +74,7 @@ public class TableroSudoku extends SudokuBase {
         Random rand = new Random();
         int celdasPorBorrar;
 
-        switch (dif) {
+        switch (dificultad) {
             case FACIL:
                 
                 celdasPorBorrar = 30 + rand.nextInt(6); 

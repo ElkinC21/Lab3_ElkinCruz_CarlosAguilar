@@ -10,20 +10,20 @@ public class SudokuGui extends JFrame {
     private int fallos = 0;
     private static final int MAX_FALLOS = 3;
     private JLabel lblErrores;
-    private TableroSudoku.Dificultad dificultadSeleccionada;
+    private TableroSudoku.Dificultad dificultad;
 
     public SudokuGui() {
-        setTitle("Sudoku - Jugar Aleatorio");
+        setTitle("Sudoku");
         setSize(500, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        dificultadSeleccionada = pedirDificultad();
-        if (dificultadSeleccionada == null) {
-            dificultadSeleccionada = TableroSudoku.Dificultad.MEDIO;
+        dificultad = pedirDificultad();
+        if (dificultad == null) {
+            dificultad = TableroSudoku.Dificultad.MEDIO;
         }
 
-        tablero = new TableroSudoku(dificultadSeleccionada);
+        tablero = new TableroSudoku(dificultad);
 
         lblErrores = new JLabel("", SwingConstants.CENTER);
         lblErrores.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -127,9 +127,9 @@ public class SudokuGui extends JFrame {
     }
 
     private void actualizarIndicadores() {
-        setTitle("Sudoku - " + dificultadSeleccionada + "  |  Fallos: " + fallos + "/" + MAX_FALLOS);
+        setTitle("Sudoku - " + dificultad + "  |  Fallos: " + fallos + "/" + MAX_FALLOS);
         if (lblErrores != null) {
-            lblErrores.setText("Dificultad: " + textoDificultad(dificultadSeleccionada)
+            lblErrores.setText("Dificultad: " + textoDificultad(dificultad)
                     + "   |   Errores: " + fallos + " / " + MAX_FALLOS);
         }
     }
@@ -145,7 +145,7 @@ public class SudokuGui extends JFrame {
 
     private void reiniciarPartida() {
         fallos = 0;
-        tablero = new TableroSudoku(dificultadSeleccionada);
+        tablero = new TableroSudoku(dificultad);
         for (int fila = 0; fila < 9; fila++) {
             for (int col = 0; col < 9; col++) {
                 int v = tablero.getValor(fila, col);
